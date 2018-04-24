@@ -1,7 +1,3 @@
-import shutil
-from aip import AipFace
-import pymysql
-import base64
 import time
 import requests
 from json import JSONDecoder
@@ -9,18 +5,18 @@ import os
 import configparser
 
 
-def Get_File_Content(FilePath):  # 获取图片
-    with open(FilePath, 'rb') as fp:
+def Get_File_Content(path):  # 获取图片
+    with open(path, 'rb') as fp:
         return fp.read()
 
 
-def Write_Txt_Msg(Txt_Name, msg):  # 写文件
-    with open(Write_Txt_Path + "\\" + Txt_Name, 'a') as f:
+def Write_Txt_Msg(txt_name, msg):  # 写文件
+    with open(Write_Txt_Path + "\\" + txt_name, 'a') as f:
         f.write(msg)
 
 
-def CreateFaceSet(Data, faceSet_Url):
-    response = requests.post(faceSet_Url, data=Data)
+def CreateFaceSet(app_key, faceset_url):
+    response = requests.post(faceset_url, data=app_key)
     req_con = response.content.decode('utf-8')
     req_dict = JSONDecoder().decode(req_con)
     if "error_message" in req_dict:
@@ -28,7 +24,7 @@ def CreateFaceSet(Data, faceSet_Url):
         Write_Txt_Msg("Face++_CreateFaceSet_Fail.txt", msg)  # 出错信息写入文件中
     else:
         msg = str(req_dict) + "\n"
-        print(Data["outer_id"] + "，创建人脸集合成功！")
+        print(app_key["outer_id"] + "，创建人脸集合成功！")
         # 返回字段说明
         # request_id ： 用于区分每一次请求的唯一的字符串。除非发生404 或 403，此字段必定返回。
         # # 404 : API_NOT_FOUND;    403 :AUTHORIZATION_ERROR
@@ -89,8 +85,8 @@ def Back_Detect_Dic(img, app_key, detect_url):
         msg = uid + "," + req_dict["error_message"] + "，检测的错误" + "\n"
         file = "Face++_Detect_Fail.txt"
     else:
-        Use_Time = end_time - start_time
-        msg = uid + "," + str(Use_Time) + "," + str(req_dict) + "\n"
+        use_time = end_time - start_time
+        msg = uid + "," + str(use_time) + "," + str(req_dict) + "\n"
         file = "Face++_Detect_TimeUse.txt"
     Write_Txt_Msg(file, msg)
     time.sleep(0)
@@ -112,8 +108,8 @@ def Detect_Faces(detect_path, app_key, detect_url):
             msg = uid + "," + req_dict["error_message"] + "，检测的错误" + "\n"
             file = "Face++_Detect_Fail.txt"
         else:
-            Use_Time = end_time - start_time
-            msg = uid + "," + str(Use_Time) + "," + str(req_dict) + "\n"
+            use_time = end_time - start_time
+            msg = uid + "," + str(use_time) + "," + str(req_dict) + "\n"
             file = "Face++_Detect_TimeUse.txt"
             count += 1
         print(req_dict)
@@ -129,7 +125,7 @@ def Detect_Faces(detect_path, app_key, detect_url):
 def Search_Face(search_path, search_key, search_url):
     count = 1
     for Img in os.listdir(search_path):
-        uid, endstr = os.path.splitext(Img)
+        uid, ends = os.path.splitext(Img)
         image = Get_File_Content(search_path + Img)  # 获取图片
         files = {"image_file": image}
         start_time = time.clock()
@@ -143,8 +139,8 @@ def Search_Face(search_path, search_key, search_url):
             msg = uid + "," + req_dict["error_message"] + "，查找的错误" + "\n"
             file = "Face++_Search_Fail.txt"
         else:
-            Use_Time = end_time - start_time
-            msg = uid + "," + str(Use_Time) + "," + str(req_dict) + "\n"
+            use_time = end_time - start_time
+            msg = uid + "," + str(use_time) + "," + str(req_dict) + "\n"
             file = "Face++_Search_TimeUse.txt"
             count += 1
         time.sleep(0)
@@ -166,7 +162,7 @@ if __name__ == '__main__':
     FaceSet_Url = config.get("Face++_FaceSet", "FaceSet_Url")
     FaceSet_Name = config.get("Face++_FaceSet", "FaceSet_Name")
     Create_Outer_Id = config.get("Face++_FaceSet", "Create_Outer_Id")
-    FaceSet_Data = {"api_key": Key, "api_secret": Secret, "display_name": FaceSet_Name, "outer_id": Create_Outer_Id}
+    FaceSet_Key = {"api_key": Key, "api_secret": Secret, "display_name": FaceSet_Name, "outer_id": Create_Outer_Id}
     # 添加人脸
     Add_Url = config.get("Face++_AddFaces", "Add_Url")
     Add_Path = config.get("Face++_AddFaces", "Add_Path")
@@ -181,7 +177,7 @@ if __name__ == '__main__':
     Search_Key = {"api_key": Key, "api_secret": Secret, "outer_id": Search_Outer_Id}
 
     # 创建人脸集合
-    # CreateFaceSet(FaceSet_Data, FaceSet_Url)
+    # CreateFaceSet(FaceSet_Key, FaceSet_Url)
     # 添加人脸
     # AddFace(Add_Path, APP_Key, Add_Url, Detect_Url, Add_Outer_Id)
     # 人脸检测

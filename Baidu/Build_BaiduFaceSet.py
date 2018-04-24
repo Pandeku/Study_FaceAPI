@@ -14,31 +14,31 @@ import configparser
 # 'result_num': 1, 'log_id': 2580833485041520, 'ext_info': {'faceliveness': '0.40944513678551'}}
 
 
-def Get_File_Content(FilePath):  # 获取图片
-    with open(FilePath, 'rb') as fp:
+def Get_File_Content(path):  # 获取图片
+    with open(path, 'rb') as fp:
         return fp.read()
 
 
-def Write_Txt_Msg(Txt_Name, Msg):  # 写文件
-    with open(Write_Txt_Path + "\\" + Txt_Name, 'a') as f:
-        f.write(Msg)
+def Write_Txt_Msg(txt_name, msg):  # 写文件
+    with open(Write_Txt_Path + "\\" + txt_name, 'a') as f:
+        f.write(msg)
 
 
-def Back_StuId_List(Path):  # 返回学号列表
-    Lines = []
-    file = open(Path, encoding='UTF-8')
+def Back_StuId_List(id_path):  # 返回学号列表
+    lines = []
+    file = open(id_path, encoding='UTF-8')
     for line in file:  # line = 1706020211 	姜彤	财务172	13：00-14：10	201	工2-201-1	未注册！	未签到！
-        Lines.append(line[0:10])  # line[0:10] = 学号
+        lines.append(line[0:10])  # line[0:10] = 学号
         # Lines.append(line[10:14]) # line[10:14] = 姓名
     file.close()
-    return Lines
+    return lines
 
 
-def Back_Student_Name(Uid):  # 连接mysql 获取学号对应的学生姓名
+def Back_Student_Name(uid):  # 连接mysql 获取学号对应的学生姓名
     result = []
     db = pymysql.connect("localhost", "pandeku", "pandeku", "django_stu_info", charset='utf8')
     cursor = db.cursor()
-    sql = "SELECT User_Name FROM login_register_attend_user WHERE User_Id='%s' " % Uid
+    sql = "SELECT User_Name FROM login_register_attend_user WHERE User_Id='%s' " % uid
     try:
         cursor.execute(sql)  # 执行sql
         result = cursor.fetchone()  # 获取一条数据
@@ -63,10 +63,10 @@ def Back_Time_Site(uid):  # 连接mysql数据库 获取学号对应的学生姓�
     return result  # 返回 考场时间 和 考试地点
 
 
-def Update_Table(Uid):  # 连接mysql 更新学号对应学生的人脸签到记录
+def Update_Table(uid):  # 连接mysql 更新学号对应学生的人脸签到记录
     db = pymysql.connect("localhost", "pandeku", "pandeku", "django_stu_info", charset='utf8')
     cursor = db.cursor()
-    sql = "UPDATE login_register_attend_user SET Is_Add_Face='%s' WHERE User_Id = '%s'" % ("人脸已注册!", Uid)
+    sql = "UPDATE login_register_attend_user SET Is_Add_Face='%s' WHERE User_Id = '%s'" % ("人脸已注册!", uid)
     try:
         cursor.execute(sql)  # 执行更新
         db.commit()  # 提交
@@ -77,32 +77,32 @@ def Update_Table(Uid):  # 连接mysql 更新学号对应学生的人脸签到记
     return
 
 
-def Get_AccessToken(Key, Secret):  # 获取 A_T
+def Get_AccessToken(api_key, secret_key):  # 获取 A_T
     http_url = 'https://aip.baidubce.com/oauth/2.0/token' \
-               '?grant_type=client_credentials&client_id=%s&client_secret=%s' % (Key, Secret)
+               '?grant_type=client_credentials&client_id=%s&client_secret=%s' % (api_key, secret_key)
     response = requests.post(http_url)
     req_con = response.content.decode(encoding='UTF-8')
     req_dict = JSONDecoder().decode(req_con)
     return req_dict['access_token']
 
 
-def Upload_FaceImgs(Path, groupId):  # 图片上传人脸库
+def Upload_FaceImg(upload_path, upload_group):  # 图片上传人脸库
     count = 1
-    for Img in os.listdir(Path):    # if Img.endswith('.JPG'):
-        image = Get_File_Content(Path+Img)  # 得到图片
-        uid, endstr = os.path.splitext(Img)  # 得到图片名
-        userInfo = Back_Student_Name(uid)  # 读Mysql表,查询学生名字
+    for Img in os.listdir(upload_path):  # if Img.endswith('.JPG'):
+        image = Get_File_Content(upload_path + Img)  # 得到图片
+        uid, ends = os.path.splitext(Img)  # 得到图片名
+        user_info = Back_Student_Name(uid)  # 读Mysql表,查询学生名字
         start = time.clock()  # 记录上传时间
-        result = client.addUser(uid, userInfo, groupId, image)  # 上传人脸库
+        result = client.addUser(uid, user_info, upload_group, image)  # 上传人脸库
         end = time.clock()
         if "error_msg" in result:
             txt = "Baidu_Upload_Fail.txt"
-            msg = uid + "," + groupId + "," + result["error_msg"] + "，添加人脸的错""\n"
+            msg = uid + "," + upload_group + "," + result["error_msg"] + "，添加人脸的错""\n"
         else:
-            Use_Time = end - start
+            use_time = end - start
             Update_Table(uid)  # 更新数据库
             txt = 'Baidu_Upload_TimeUse.txt'
-            msg = str(count) + "," + uid + "," + groupId + "," + str(Use_Time) + "\n"
+            msg = str(count) + "," + uid + "," + upload_group + "," + str(use_time) + "\n"
             print(str(count) + ",图片上传人脸库成功！")
             count += 1
         Write_Txt_Msg(txt, msg)
@@ -111,57 +111,55 @@ def Upload_FaceImgs(Path, groupId):  # 图片上传人脸库
     return
 
 
-def FaceBase_Add_ID(Path, Group):
+def FaceBase_Add_ID(path, group):
     # path = config.get("Baidu", "upload_groupid") # 未加注图片路径
     # Group_Id = config.get("Baidu", "upload_groupid")  # 已构建好的人脸库组名
     # FaceBase_Add_ID(path, Group_Id) #使用人脸库加注学号
-    os.chdir(Path)
-    for Img in os.listdir(Path):
-        # if Img.endswith('.JPG'):
+    os.chdir(path)
+    for Img in os.listdir(path):
         options = {
             "ext_fields": "faceliveness",
             "user_top_num": 1
         }
         image = Get_File_Content(Img)  # 获取图片
-        groupId = Group  # 云上人脸库组
-        Res = client.identifyUser(groupId, image, options)  # 人脸认证分数
-        print(Res)
-        if Res['result'][0]['scores'][0] > 66:  # 人脸认证分数，一般为80分最合适
-            name = Res['result'][0]['uid']  # 给图片加学号
-            # name = Res['result'][0]['user_info']  # 给图片加名字
-            src = os.path.join(os.path.abspath(Path), Img)
-            dst = os.path.join(os.path.abspath(Path), str(name) + '.JPG')
+        res = client.identifyUser(group, image, options)  # 人脸认证分数
+        print(res)
+        if res['result'][0]['scores'][0] > 66:  # 人脸认证分数，一般为80分最合适
+            name = res['result'][0]['uid']  # 给图片加学号
+            # name = res['result'][0]['user_info']  # 给图片加名字
+            src = os.path.join(os.path.abspath(path), Img)
+            dst = os.path.join(os.path.abspath(path), str(name) + '.JPG')
             try:
                 os.rename(src, dst)
-            except:
-                print("修改图片名失败!")
+            except FileExistsError:
+                print(FileExistsError)
         time.sleep(0.3)
     return
 
 
-def Table_Add_User(Id_Path, Imgs_Path):  # 加注图片名
-    Lines = Back_StuId_List(Id_Path)  # 返回学号列表
+def Table_Add_User(id_path, img_path):  # 加注图片名
+    lines = Back_StuId_List(id_path)  # 返回学号列表
     count = 0  # 表的第一条记录
-    for Img in os.listdir(Imgs_Path):  # 打开图片
+    for Img in os.listdir(img_path):  # 打开图片
         try:
-            src = os.path.join(Imgs_Path, Img)
-            dst = os.path.join(Imgs_Path, str(Lines[count]) + ".JPG")
+            src = os.path.join(img_path, Img)
+            dst = os.path.join(img_path, str(lines[count]) + ".JPG")
             os.rename(src, dst)  # 重命名
             count += 1  # 第二张图
-        except:
+        except FileExistsError:
             print(FileExistsError)
     return
 
 
-def Delete_Face_Pic(Stuid_Path, Group):  # 删除人脸库
-    Lines = Back_StuId_List(Stuid_Path)  # 返回学号列表
-    for uid in Lines:
+def Delete_Face_Pic(delete_stu, delete_group):  # 删除人脸库
+    lines = Back_StuId_List(delete_stu)  # 返回学号列表
+    for uid in lines:
         try:
-            res = client.deleteGroupUser(Group, uid)
+            res = client.deleteGroupUser(delete_group, uid)
             # res = client.deleteUser(uid) # 删除全部
             if "error_msg" in res:
                 txt = "Delete_FacePic_Fail.txt"
-                msg = uid + " ," + Group + "\n"
+                msg = uid + " ," + delete_group + "\n"
                 Write_Txt_Msg(txt, msg)  # 出错信息写入文件中
             else:
                 print(uid + ",删除成功！")
@@ -171,22 +169,22 @@ def Delete_Face_Pic(Stuid_Path, Group):  # 删除人脸库
     return
 
 
-def Detect_Face_SDK(Path):  # 人脸检测 SDK 方法
+def Detect_Face_SDK(detect_path):  # 人脸检测 SDK 方法
     count = 1
-    for Img in os.listdir(Path):
-        uid, endstr = os.path.splitext(Img)  # 得到图片名
-        image = Get_File_Content(Path + Img)  # 获取图片
+    for Img in os.listdir(detect_path):
+        uid, ends = os.path.splitext(Img)  # 得到图片名
+        image = Get_File_Content(detect_path + Img)  # 获取图片
         # image = base64.b64encode(image)
         options = {"max_face_num": 1, "face_fields": "beauty,gender,age"}
         start_time = time.clock()  # 加时间记录
-        Result = client.detect(image, options)
+        result = client.detect(image, options)
         end_time = time.clock()
-        if Result["result_num"] == 0:
+        if result["result_num"] == 0:
             msg = uid
             txt = "Baidu_FaceDetect_SDK_Fail.txt"
         else:
-            Use_Time = end_time - start_time
-            msg = uid + "," + str(Use_Time) + "," + str(Result) + "\n"
+            use_time = end_time - start_time
+            msg = uid + "," + str(use_time) + "," + str(result) + "\n"
             txt = "Baidu_FaceDetect_SDK_TimeUse.txt"
             count += 1
         Write_Txt_Msg(txt, msg)
@@ -195,13 +193,13 @@ def Detect_Face_SDK(Path):  # 人脸检测 SDK 方法
     return
 
 
-def Detect_Face_API(Path, Url):
-    http_url = Url + "?access_token=" + Access_token
+def Detect_Face_API(detect_path, detect_url):
+    http_url = detect_url + "?access_token=" + Access_token
     count = 1
-    for Img in os.listdir(Path):
+    for Img in os.listdir(detect_path):
         #       if Img.endswith('.JPG'):
-        uid, endstr = os.path.splitext(Img)  # 得到图片名
-        image = Get_File_Content(Path + Img)  # 获取图片
+        uid, ends = os.path.splitext(Img)  # 得到图片名
+        image = Get_File_Content(detect_path + Img)  # 获取图片
         image = base64.b64encode(image)  # base64图片
         files = {"image": image}
         start_time = time.clock()
@@ -213,8 +211,8 @@ def Detect_Face_API(Path, Url):
             msg = uid
             file = "Baidu_FaceDetect_API_Fail.txt"
         else:
-            Use_Time = end_time - start_time
-            msg = uid + "," + str(Use_Time) + "," + str(req_dict)
+            use_time = end_time - start_time
+            msg = uid + "," + str(use_time) + "," + str(req_dict)
             file = "Baidu_FaceDetect_API_TimeUse.txt"
             count += 1
         Write_Txt_Msg(file, msg)
@@ -223,21 +221,21 @@ def Detect_Face_API(Path, Url):
     return
 
 
-def Search_Faces(Path, Group, Url):
-    http_url = Url + "?access_token=" + Access_token
+def Search_Faces(search_path, search_group, search_url):
+    http_url = search_url + "?access_token=" + Access_token
     count = 1
-    for Img in os.listdir(Path):
-        uid, endstr = os.path.splitext(Img)  # 得到图片名
-        image = Get_File_Content(Path+Img)  # 获取图片
+    for Img in os.listdir(search_path):
+        uid, ends = os.path.splitext(Img)  # 得到图片名
+        image = Get_File_Content(search_path + Img)  # 获取图片
         image = base64.b64encode(image)  # 图片base64 编码
-        params = {"face_top_num": "1", "group_id": Group, "images": image, "user_top_num": "1"}
+        params = {"face_top_num": "1", "group_id": search_group, "images": image, "user_top_num": "1"}
         start_time = time.clock()
         response = requests.post(http_url, data=params)  # 发送requests请求
         end_time = time.clock()
         req_con = response.content.decode('utf-8')
         req_dict = JSONDecoder().decode(req_con)
-        Use_Time = end_time - start_time
-        msg = uid + "," + str(Use_Time) + "," + str(req_dict) + "\n"
+        use_time = end_time - start_time
+        msg = uid + "," + str(use_time) + "," + str(req_dict) + "\n"
         Write_Txt_Msg("Baidu_SearchFace_API_TimeUse.txt", msg)
         count += 1
         time.sleep(0)
@@ -246,12 +244,12 @@ def Search_Faces(Path, Group, Url):
     return
 
 
-def Move_Pic(Path):
-    os.chdir(Path)
-    for Img in os.listdir(Path):
-        uid, endstr = os.path.splitext(Img)  # 得到图片名
+def Move_Pic(move_path):
+    os.chdir(move_path)
+    for Img in os.listdir(move_path):
+        uid, ends = os.path.splitext(Img)  # 得到图片名
         res = Back_Time_Site(uid)  # 查询得到时间和考场
-        if None == res:
+        if res is None:
             continue
         else:
             shutil.move(Img, os.path.join("E:\\study", res[0] + "\\" + res[1]))  # 移动到对应的考场
@@ -289,7 +287,7 @@ if __name__ == '__main__':
     Move_Path = config.get("Move_Imgs", "Move_Path")
 
     # ## 上传人脸库 ###
-    # Upload_FaceImgs(Upload_Path, Upload_GroupId)  # 上传人脸库
+    # Upload_FaceImg(Upload_Path, Upload_GroupId)  # 上传人脸库
     # Table_Add_User(AddId_Id_Path, AddId_Imgs_Path)  # 加注学号
     # Delete_Face_Pic(Delete_Stuid_Path, Delete_GroupId)  # 批量删除人脸库
     # Detect_Face_SDK(Detect_Path)  # 人脸检测 SDK
