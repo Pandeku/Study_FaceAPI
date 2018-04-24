@@ -29,7 +29,6 @@ config["Face++_Detect"] = {}
 _Detect = config["Face++_Detect"]
 _Detect['Detect_Url'] = "https://api-cn.faceplusplus.com/facepp/v3/detect"
 _Detect['Detect_Path'] = "E:\\Test_Face_Set\\"
-
 # 人脸查找
 config["Face++_Search"] = {}
 _Search = config["Face++_Search"]
