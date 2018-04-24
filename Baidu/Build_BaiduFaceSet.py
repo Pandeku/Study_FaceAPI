@@ -269,28 +269,28 @@ if __name__ == '__main__':
     Write_Txt_Path = config.get("File_Path", "Write_Txt_Path")
     # 上传路径和人脸库组名
     Upload_Path = config.get("Baidu_Upload", "Upload_Path")
-    Upload_GroupId = config.get("Baidu_Upload", "Upload_GroupId")
+    Upload_Group = config.get("Baidu_Upload", "Upload_Group")
     # 学号和图片路径
     AddId_Id_Path = config.get("Baidu_AddID", "AddId_Id_Path")
-    AddId_Imgs_Path = config.get("Baidu_AddID", "AddId_Imgs_Path")
+    AddId_Img_Path = config.get("Baidu_AddID", "AddId_Img_Path")
     # 学号和学号所在的组
-    Delete_Stuid_Path = config.get("Baidu_Delete", "Delete_Stuid_Path")  # 要删除的学号路径
-    Delete_GroupId = config.get("Baidu_Delete", "Delete_GroupId")  # 学号所在组
+    Delete_Stu_Path = config.get("Baidu_Delete", "Delete_Stu_Path")  # 要删除的学号路径
+    Delete_Group = config.get("Baidu_Delete", "Delete_Group")  # 学号所在组
     # 图片路径和请求的API url
     Detect_Path = config.get("Baidu_Detect", "Detect_Path")  # 人脸检测图片路径
     Detect_Url = config.get("Baidu_Detect", "Detect_Url")
     # 图片路径和组名
     Search_Path = config.get("Baidu_Search", "Search_Path")
-    Search_Groupid = config.get("Baidu_Search", "Search_Groupid")
+    Search_Group = config.get("Baidu_Search", "Search_Group")
     Search_Url = config.get("Baidu_Search", "Search_Url")
     # 移动图片所在文件夹
-    Move_Path = config.get("Move_Imgs", "Move_Path")
+    Move_Path = config.get("Move_Img", "Move_Path")
 
     # ## 上传人脸库 ###
-    # Upload_FaceImg(Upload_Path, Upload_GroupId)  # 上传人脸库
-    # Table_Add_User(AddId_Id_Path, AddId_Imgs_Path)  # 加注学号
-    # Delete_Face_Pic(Delete_Stuid_Path, Delete_GroupId)  # 批量删除人脸库
-    # Detect_Face_SDK(Detect_Path)  # 人脸检测 SDK
-    # Detect_Face_API(Detect_Path, Detect_Url)  # 人脸检测 API
-    # Search_Faces(Search_Path, Search_Groupid,Search_Url)  # 人脸查找 API
-    # Move_Pic(Move_Path)  # 移动图片到指定文件夹
+    Upload_FaceImg(Upload_Path, Upload_Group)  # 上传人脸库
+    Table_Add_User(AddId_Id_Path, AddId_Img_Path)  # 加注学号
+    Delete_Face_Pic(Delete_Stu_Path, Delete_Group)  # 批量删除人脸库
+    Detect_Face_SDK(Detect_Path)  # 人脸检测 SDK
+    Detect_Face_API(Detect_Path, Detect_Url)  # 人脸检测 API
+    Search_Faces(Search_Path, Search_Group, Search_Url)  # 人脸查找 API
+    Move_Pic(Move_Path)  # 移动图片到指定文件夹
