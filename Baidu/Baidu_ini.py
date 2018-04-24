@@ -44,6 +44,7 @@ Baidu_Detect["Search_Group"] = "test_add"
 config["Move_Img"] = {}
 Move_Img = config["Move_Img"]
 Move_Img["Move_Path"] = "E:\\study\\all_pic\\"
+
 # 保存配置文件
 with open("Baidu_INI.ini", 'w') as configfile:
     config.write(configfile)
